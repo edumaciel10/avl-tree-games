@@ -21,5 +21,6 @@ void avl_em_ordem(AVL *arvore);
 void avl_pos_ordem(AVL *arvore);
 boolean avl_remover_por_ano(AVL *arvore, const int ano);
 void avl_apagar(AVL **arvore);
+AVL *lerJogosDoCSV();
 
 #endif //AVL_H
