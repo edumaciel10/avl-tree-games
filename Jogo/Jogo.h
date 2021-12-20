@@ -16,6 +16,7 @@ int jogo_get_chave(const JOGO *jogo);
 boolean jogo_set_chave(JOGO *jogo, int chave);
 char *jogo_get_nome(JOGO *jogo);
 int jogo_get_ano(JOGO *jogo);
+boolean jogo_set_ano(JOGO *jogo, int ano);
 char *jogo_get_empresa(JOGO *jogo);
 boolean jogos_iguais(const JOGO *jogo1, const JOGO *jogo2);
 

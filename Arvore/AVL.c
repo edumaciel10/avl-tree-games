@@ -32,6 +32,11 @@ NODE *rodar_direita(NODE *a);
 NODE *rodar_esquerda_direita(NODE *a);
 NODE *rodar_direita_esquerda(NODE *a);
 
+// Remoção
+static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo);
+static NODE* remover_no(NODE **raiz, JOGO *jogo);
+static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant);
+
 // Ordem
 static void pre_ordem_recursivo(NODE *no);
 static void em_ordem_recursivo(NODE *no);
@@ -155,9 +160,77 @@ NODE *rodar_direita_esquerda(NODE *a)   {
 }
 
 // Funções de remoção
-boolean avl_remover_por_ano(AVL *arvore, const int ano) {
-    printf("Removendo jogos do ano %d\n", ano);
-    return TRUE;
+int avl_remover_por_ano(AVL *arvore, int ano) {
+    JOGO *jogoTemporario = (JOGO*) malloc(sizeof(JOGO*));
+    jogo_set_ano(jogoTemporario, ano);
+
+    int removidos = 0;
+    while(avl_remover_no_e_rotacionar(&(arvore->raiz), jogoTemporario) != NULL){
+        removidos++;
+    }
+    free(jogoTemporario);
+    return removidos;
+}
+
+static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo) {
+    (*raiz) = remover_no(raiz, jogo);
+
+    (*raiz)->altura = max(avl_altura_no((*raiz)->esquerda),
+                    avl_altura_no((*raiz)->direita)) + 1;
+
+    (*raiz) = selecionar_e_executar_rotacao(*raiz, jogo);
+
+    return (*raiz);
+}
+
+static NODE* remover_no(NODE **raiz, JOGO *jogo) {
+    NODE *noRemovido;
+
+    if (*raiz == NULL) {
+        return *raiz;
+    }
+    if(jogo_get_ano((*raiz)->jogo) == jogo_get_ano(jogo)){
+        if((*raiz)->esquerda == NULL || (*raiz)->direita == NULL)
+        {
+            noRemovido = *raiz;
+            if((*raiz)->esquerda == NULL) {
+                *raiz = (*raiz)->direita;
+            }
+            else {
+                *raiz = (*raiz)->esquerda;
+            }
+            free(noRemovido);
+            noRemovido = NULL;
+        }else{
+            troca_min_dir((*raiz)->direita, (*raiz), (*raiz));
+        }
+    }
+    else if (JogoEhMaior(*raiz, jogo)) {
+        (*raiz)->direita = avl_remover_no_e_rotacionar(&(*raiz)->direita, jogo);
+    }
+    else if (JogoEhMenor(*raiz, jogo)) {
+        (*raiz)->esquerda = avl_remover_no_e_rotacionar(&(*raiz)->esquerda, jogo);
+    }
+
+    return (*raiz);
+}
+
+static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant)
+{
+    if(troca->esquerda != NULL)
+    {
+        troca_min_dir(troca->esquerda, raiz, troca);
+        return;
+    }
+    if(raiz == ant) {
+        ant->direita = troca->direita;
+    }
+    else {
+        ant->esquerda = troca->direita;
+    }
+    raiz->jogo = troca->jogo;
+    free(troca);
+    troca = NULL;
 }
 
 // Funções de ordem
