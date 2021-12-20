@@ -6,9 +6,9 @@
 struct game_st
 {
     int chave;
-    char nome[50];
+    char *nome;
     int ano;
-    char empresa[50];
+    char *empresa;
 };
 
 JOGO *jogo_criar_vazio()
@@ -27,10 +27,12 @@ JOGO *jogo_criar(int chave, const char *nome, int ano, const char *empresa)
 
     if (jogo != NULL)
     {
-        jogo->chave = chave;
+        jogo->nome = malloc(sizeof(char) * (strlen(nome) + 1));
+        jogo->empresa = malloc(sizeof(char) * (strlen(empresa) + 1));
         strcpy(jogo->nome, nome);
-        jogo->ano = ano;
         strcpy(jogo->empresa, empresa);
+        jogo->chave = chave;
+        jogo->ano = ano;
         return jogo;
     }
     return NULL;
@@ -63,6 +65,8 @@ boolean jogo_apagar(JOGO **jogo)
     if (*jogo != NULL)
     {
         (*jogo)->chave = ERRO; /*apaga o jogo simbolicamente*/
+        free((*jogo)->nome);
+        free((*jogo)->empresa);
         free(*jogo);
         *jogo = NULL;
         return TRUE;
