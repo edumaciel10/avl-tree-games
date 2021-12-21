@@ -35,7 +35,6 @@ NODE *rodar_direita_esquerda(NODE *a);
 // Remoção
 static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo);
 static NODE* remover_no(NODE **raiz, JOGO *jogo);
-static NODE* max_esq(NODE *raiz);
 static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant);
 
 // Ordem
@@ -212,11 +211,7 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
             }
             apagar_no(&noRemovido);
         }else{
-            NODE *nodeTemporario = max_esq((*raiz)->esquerda);
-            jogo_apagar(&(*raiz)->jogo);
-            (*raiz)->jogo = nodeTemporario->jogo;
-
-            (*raiz)->esquerda = avl_remover_no_e_rotacionar(&(*raiz)->direita, (*raiz)->jogo);
+            troca_min_dir((*raiz)->direita, *raiz, *raiz);
         }
     }
     else if (JogoEhMaior(*raiz, jogo)) {
@@ -227,17 +222,6 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
     }
 
     return (*raiz);
-}
-
-static NODE* max_esq(NODE *raiz)
-{
-    NODE *currNode = raiz;
-
-    while(currNode->direita != NULL){
-        currNode = currNode->direita;
-    }
-
-    return currNode;
 }
 
 static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant)
