@@ -35,6 +35,7 @@ NODE *rodar_direita_esquerda(NODE *a);
 // Remoção
 static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo);
 static NODE* remover_no(NODE **raiz, JOGO *jogo);
+static NODE* max_esq(NODE *raiz);
 static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant);
 
 // Ordem
@@ -44,6 +45,7 @@ static void pos_ordem_recursivo(NODE *no);
 
 // Apagar árvore
 static void avl_apagar_recursivo(NODE **raiz);
+static void apagar_no(NODE **no);
 
 // Auxiliares
 int avl_altura_no(NODE* raiz);
@@ -51,6 +53,7 @@ static bool JogoEhMenor(const NODE *raiz, JOGO *jogo);
 static bool JogoEhMaior(const NODE *raiz, JOGO *jogo);
 static bool DesbalanceamentoEhPositivo(NODE *raiz);
 static bool DesbalanceamentoEhNegativo(NODE *raiz);
+static int contar_nos_por_ano(NODE *raiz, JOGO *jogo);
 
 
 
@@ -161,19 +164,27 @@ NODE *rodar_direita_esquerda(NODE *a)   {
 
 // Funções de remoção
 int avl_remover_por_ano(AVL *arvore, int ano) {
-    JOGO *jogoTemporario = (JOGO*) malloc(sizeof(JOGO*));
+    JOGO *jogoTemporario = jogo_criar_vazio();
+    if(jogoTemporario == NULL){
+        return -1;
+    }
     jogo_set_ano(jogoTemporario, ano);
 
-    int removidos = 0;
-    while(avl_remover_no_e_rotacionar(&(arvore->raiz), jogoTemporario) != NULL){
-        removidos++;
+    int jogosParaRemover = contar_nos_por_ano(arvore->raiz, jogoTemporario);
+
+    for(int i = 0; i < jogosParaRemover; i++){
+        avl_remover_no_e_rotacionar(&(arvore->raiz), jogoTemporario);
     }
-    free(jogoTemporario);
-    return removidos;
+    jogo_apagar(&jogoTemporario);
+    return jogosParaRemover;
 }
 
 static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo) {
     (*raiz) = remover_no(raiz, jogo);
+
+    if(*raiz == NULL){
+        return *raiz;
+    }
 
     (*raiz)->altura = max(avl_altura_no((*raiz)->esquerda),
                     avl_altura_no((*raiz)->direita)) + 1;
@@ -199,10 +210,13 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
             else {
                 *raiz = (*raiz)->esquerda;
             }
-            free(noRemovido);
-            noRemovido = NULL;
+            apagar_no(&noRemovido);
         }else{
-            troca_min_dir((*raiz)->direita, (*raiz), (*raiz));
+            NODE *nodeTemporario = max_esq((*raiz)->esquerda);
+            jogo_apagar(&(*raiz)->jogo);
+            (*raiz)->jogo = nodeTemporario->jogo;
+
+            (*raiz)->esquerda = avl_remover_no_e_rotacionar(&(*raiz)->direita, (*raiz)->jogo);
         }
     }
     else if (JogoEhMaior(*raiz, jogo)) {
@@ -213,6 +227,17 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
     }
 
     return (*raiz);
+}
+
+static NODE* max_esq(NODE *raiz)
+{
+    NODE *currNode = raiz;
+
+    while(currNode->direita != NULL){
+        currNode = currNode->direita;
+    }
+
+    return currNode;
 }
 
 static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant)
@@ -228,6 +253,7 @@ static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant)
     else {
         ant->esquerda = troca->direita;
     }
+    jogo_apagar(&(raiz->jogo));
     raiz->jogo = troca->jogo;
     free(troca);
     troca = NULL;
@@ -281,9 +307,13 @@ static void avl_apagar_recursivo(NODE **raiz) {
     if (*raiz != NULL) {
         avl_apagar_recursivo(&((*raiz)->esquerda));
         avl_apagar_recursivo(&((*raiz)->direita));
-        jogo_apagar(&(*raiz)->jogo);
-        free(*raiz);
+        apagar_no(raiz);
     }
+}
+
+static void apagar_no(NODE **no){
+    jogo_apagar(&(*no)->jogo);
+    free(*no);
 }
 
 // Funções auxiliares
@@ -343,4 +373,18 @@ static bool DesbalanceamentoEhPositivo(NODE *raiz) {
 static bool DesbalanceamentoEhNegativo(NODE *raiz) {
     return avl_altura_no(raiz->esquerda)
                - avl_altura_no(raiz->direita) == -2;
+}
+
+static int contar_nos_por_ano(NODE *raiz, JOGO *jogo) {
+    if (raiz == NULL) {
+        return 0;
+    }
+
+    int contagemDosFilhos = contar_nos_por_ano(raiz->esquerda, jogo) + contar_nos_por_ano(raiz->direita, jogo);
+
+    if(jogo_get_ano(raiz->jogo) == jogo_get_ano(jogo)){
+        return 1 + contagemDosFilhos;
+    }
+
+    return contagemDosFilhos;
 }

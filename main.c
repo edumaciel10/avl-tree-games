@@ -17,11 +17,9 @@ int main()
     char *input = readLine();
 
     int ano;
-    while(strcmp(input,"f") != 0) {
+    while(strcmp(input,"F") != 0) {
         ano = atoi(input);
-        int removidos = avl_remover_por_ano(catalogo, ano);
-
-        printf("Foram removidos %d jogos\n", removidos);
+        avl_remover_por_ano(catalogo, ano);
 
         free(input);
         input = readLine();
