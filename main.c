@@ -43,21 +43,3 @@ int main()
     avl_apagar(&catalogo);
     return 0;
 }
-
-AVL *lerJogosDoCSV(){
-    FILE *arquivo;
-    arquivo = fopen("CSV.csv", "r");
-    fseek(arquivo, 3, SEEK_SET);
-    JOGO *jogo;
-    int key = 1;
-    AVL *arvore = avl_criar();
-    while( !feof(arquivo) ){
-        jogo = jogo_ler_linha_csv(arquivo, key);
-        if(jogo != NULL){
-            avl_inserir(arvore, jogo);
-            key++;
-        }
-    }
-    fclose(arquivo);
-    return arvore;
-}
