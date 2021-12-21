@@ -111,6 +111,16 @@ int jogo_get_ano(JOGO *jogo)
     return jogo->ano;
 }
 
+boolean jogo_set_ano(JOGO *jogo, int ano)
+{
+    if (jogo != NULL)
+    {
+        jogo->ano = ano;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 char *jogo_get_empresa(JOGO *jogo)
 {
     if(jogo == NULL){

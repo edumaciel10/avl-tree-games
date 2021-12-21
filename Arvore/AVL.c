@@ -32,6 +32,11 @@ NODE *rodar_direita(NODE *a);
 NODE *rodar_esquerda_direita(NODE *a);
 NODE *rodar_direita_esquerda(NODE *a);
 
+// Remoção
+static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo);
+static NODE* remover_no(NODE **raiz, JOGO *jogo);
+static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant);
+
 // Ordem
 static void pre_ordem_recursivo(NODE *no);
 static void em_ordem_recursivo(NODE *no);
@@ -39,6 +44,7 @@ static void pos_ordem_recursivo(NODE *no);
 
 // Apagar árvore
 static void avl_apagar_recursivo(NODE **raiz);
+static void apagar_no(NODE **no);
 
 // Auxiliares
 int avl_altura_no(NODE* raiz);
@@ -46,6 +52,7 @@ static bool JogoEhMenor(const NODE *raiz, JOGO *jogo);
 static bool JogoEhMaior(const NODE *raiz, JOGO *jogo);
 static bool DesbalanceamentoEhPositivo(NODE *raiz);
 static bool DesbalanceamentoEhNegativo(NODE *raiz);
+static int contar_nos_por_ano(NODE *raiz, JOGO *jogo);
 
 
 
@@ -155,9 +162,85 @@ NODE *rodar_direita_esquerda(NODE *a)   {
 }
 
 // Funções de remoção
-boolean avl_remover_por_ano(AVL *arvore, const int ano) {
-    printf("Removendo jogos do ano %d\n", ano);
-    return TRUE;
+int avl_remover_por_ano(AVL *arvore, int ano) {
+    JOGO *jogoTemporario = jogo_criar_vazio();
+    if(jogoTemporario == NULL){
+        return -1;
+    }
+    jogo_set_ano(jogoTemporario, ano);
+
+    int jogosParaRemover = contar_nos_por_ano(arvore->raiz, jogoTemporario);
+
+    for(int i = 0; i < jogosParaRemover; i++){
+        avl_remover_no_e_rotacionar(&(arvore->raiz), jogoTemporario);
+    }
+    jogo_apagar(&jogoTemporario);
+    return jogosParaRemover;
+}
+
+static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo) {
+    (*raiz) = remover_no(raiz, jogo);
+
+    if(*raiz == NULL){
+        return *raiz;
+    }
+
+    (*raiz)->altura = max(avl_altura_no((*raiz)->esquerda),
+                    avl_altura_no((*raiz)->direita)) + 1;
+
+    (*raiz) = selecionar_e_executar_rotacao(*raiz, jogo);
+
+    return (*raiz);
+}
+
+static NODE* remover_no(NODE **raiz, JOGO *jogo) {
+    NODE *noRemovido;
+
+    if (*raiz == NULL) {
+        return *raiz;
+    }
+    if(jogo_get_ano((*raiz)->jogo) == jogo_get_ano(jogo)){
+        if((*raiz)->esquerda == NULL || (*raiz)->direita == NULL)
+        {
+            noRemovido = *raiz;
+            if((*raiz)->esquerda == NULL) {
+                *raiz = (*raiz)->direita;
+            }
+            else {
+                *raiz = (*raiz)->esquerda;
+            }
+            apagar_no(&noRemovido);
+        }else{
+            troca_min_dir((*raiz)->direita, *raiz, *raiz);
+        }
+    }
+    else if (JogoEhMaior(*raiz, jogo)) {
+        (*raiz)->direita = avl_remover_no_e_rotacionar(&(*raiz)->direita, jogo);
+    }
+    else if (JogoEhMenor(*raiz, jogo)) {
+        (*raiz)->esquerda = avl_remover_no_e_rotacionar(&(*raiz)->esquerda, jogo);
+    }
+
+    return (*raiz);
+}
+
+static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant)
+{
+    if(troca->esquerda != NULL)
+    {
+        troca_min_dir(troca->esquerda, raiz, troca);
+        return;
+    }
+    if(raiz == ant) {
+        ant->direita = troca->direita;
+    }
+    else {
+        ant->esquerda = troca->direita;
+    }
+    jogo_apagar(&(raiz->jogo));
+    raiz->jogo = troca->jogo;
+    free(troca);
+    troca = NULL;
 }
 
 // Funções de ordem
@@ -208,9 +291,13 @@ static void avl_apagar_recursivo(NODE **raiz) {
     if (*raiz != NULL) {
         avl_apagar_recursivo(&((*raiz)->esquerda));
         avl_apagar_recursivo(&((*raiz)->direita));
-        jogo_apagar(&(*raiz)->jogo);
-        free(*raiz);
+        apagar_no(raiz);
     }
+}
+
+static void apagar_no(NODE **no){
+    jogo_apagar(&(*no)->jogo);
+    free(*no);
 }
 
 // Funções auxiliares
@@ -272,6 +359,19 @@ static bool DesbalanceamentoEhNegativo(NODE *raiz) {
                - avl_altura_no(raiz->direita) == -2;
 }
 
+static int contar_nos_por_ano(NODE *raiz, JOGO *jogo) {
+    if (raiz == NULL) {
+        return 0;
+    }
+
+    int contagemDosFilhos = contar_nos_por_ano(raiz->esquerda, jogo) + contar_nos_por_ano(raiz->direita, jogo);
+
+    if(jogo_get_ano(raiz->jogo) == jogo_get_ano(jogo)){
+        return 1 + contagemDosFilhos;
+    }
+
+    return contagemDosFilhos;
+}
 AVL *lerJogosDoCSV(){
     FILE *arquivo;
     arquivo = fopen("CSV.csv", "r");

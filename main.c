@@ -17,7 +17,7 @@ int main()
     char *input = readLine();
 
     int ano;
-    while(strcmp(input,"f") != 0) {
+    while(strcmp(input,"F") != 0) {
         ano = atoi(input);
         avl_remover_por_ano(catalogo, ano);
 
