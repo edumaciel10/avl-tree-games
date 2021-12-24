@@ -243,17 +243,17 @@ static void troca_max_esq(NODE **troca, NODE *raiz, NODE *ant)
         return;
     }
 
-    JOGO* trocaJogo = (*troca)->jogo;
+    NODE* trocaReserva = (*troca);
     if(raiz == ant) {
-        ant->esquerda = (*troca)->direita;
+        ant->esquerda = (*troca)->esquerda;
     }
     else {
-        ant->direita = (*troca)->direita;
+        ant->direita = (*troca)->esquerda;
     }
     jogo_apagar(&(raiz->jogo));
-    raiz->jogo = trocaJogo;
-    free(*troca);
-    (*troca) = NULL;
+    raiz->jogo = trocaReserva->jogo;
+    free(trocaReserva);
+    trocaReserva = NULL;
 }
 // Funções de ordem
 void avl_pre_ordem(AVL *arvore){
@@ -304,13 +304,13 @@ static void avl_apagar_recursivo(NODE **raiz) {
         avl_apagar_recursivo(&((*raiz)->esquerda));
         avl_apagar_recursivo(&((*raiz)->direita));
         apagar_no(raiz);
-        free(raiz);
     }
 }
 
 static void apagar_no(NODE **no){
     jogo_apagar(&(*no)->jogo);
     free(*no);
+    *no = NULL;
 }
 
 // Funções auxiliares
