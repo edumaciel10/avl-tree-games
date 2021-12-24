@@ -35,7 +35,7 @@ NODE *rodar_direita_esquerda(NODE *a);
 // Remoção
 static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo);
 static NODE* remover_no(NODE **raiz, JOGO *jogo);
-static void troca_min_dir(NODE **troca, NODE *raiz, NODE *ant);
+static void troca_max_esq(NODE **troca, NODE *raiz, NODE *ant);
 
 // Ordem
 static void pre_ordem_recursivo(NODE *no);
@@ -54,8 +54,6 @@ static bool DesbalanceamentoEhPositivo(NODE *raiz);
 static bool DesbalanceamentoEhNegativo(NODE *raiz);
 static int calcula_balanceamento(NODE *raiz);
 static int contar_nos_por_ano(NODE *raiz, JOGO *jogo);
-
-
 
 // Funções de criação
 AVL *avl_criar() {
@@ -188,6 +186,7 @@ int avl_remover_por_ano(AVL *arvore, int ano) {
         avl_remover_no_e_rotacionar(&(arvore->raiz), jogoTemporario);
     }
     jogo_apagar(&jogoTemporario);
+
     return jogosParaRemover;
 }
 
@@ -224,7 +223,7 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
             }
             apagar_no(&noRemovido);
         }else{
-            troca_min_dir(&(*raiz)->direita, *raiz, *raiz);
+            troca_max_esq(&(*raiz)->esquerda, *raiz, *raiz);
         }
     }
     else if (JogoEhMaior(*raiz, jogo)) {
@@ -236,29 +235,26 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
 
     return (*raiz);
 }
-
-static void troca_min_dir(NODE **troca, NODE *raiz, NODE *ant)
+static void troca_max_esq(NODE **troca, NODE *raiz, NODE *ant)
 {
-    if((*troca)->esquerda != NULL)
+    if((*troca)->direita != NULL)
     {
-        troca_min_dir(&(*troca)->esquerda, raiz, *troca);
+        troca_max_esq(&(*troca)->direita, raiz, *troca);
         return;
     }
 
     JOGO* trocaJogo = (*troca)->jogo;
-
     if(raiz == ant) {
-        ant->direita = (*troca)->direita;
+        ant->esquerda = (*troca)->direita;
     }
     else {
-        ant->esquerda = (*troca)->direita;
+        ant->direita = (*troca)->direita;
     }
     jogo_apagar(&(raiz->jogo));
     raiz->jogo = trocaJogo;
     free(*troca);
     (*troca) = NULL;
 }
-
 // Funções de ordem
 void avl_pre_ordem(AVL *arvore){
     pre_ordem_recursivo(arvore->raiz);
@@ -308,6 +304,7 @@ static void avl_apagar_recursivo(NODE **raiz) {
         avl_apagar_recursivo(&((*raiz)->esquerda));
         avl_apagar_recursivo(&((*raiz)->direita));
         apagar_no(raiz);
+        free(raiz);
     }
 }
 

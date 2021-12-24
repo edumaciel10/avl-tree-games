@@ -1,7 +1,0 @@
-{
-  "discord.enabled": true,
-  "files.associations": {
-    "*.mdx": "markdown",
-    "avl.h": "c"
-  }
-}
