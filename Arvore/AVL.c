@@ -35,7 +35,7 @@ NODE *rodar_direita_esquerda(NODE *a);
 // Remoção
 static NODE* avl_remover_no_e_rotacionar(NODE **raiz, JOGO *jogo);
 static NODE* remover_no(NODE **raiz, JOGO *jogo);
-static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant);
+static void troca_min_dir(NODE **troca, NODE *raiz, NODE *ant);
 
 // Ordem
 static void pre_ordem_recursivo(NODE *no);
@@ -52,6 +52,7 @@ static bool JogoEhMenor(const NODE *raiz, JOGO *jogo);
 static bool JogoEhMaior(const NODE *raiz, JOGO *jogo);
 static bool DesbalanceamentoEhPositivo(NODE *raiz);
 static bool DesbalanceamentoEhNegativo(NODE *raiz);
+static int calcula_balanceamento(NODE *raiz);
 static int contar_nos_por_ano(NODE *raiz, JOGO *jogo);
 
 
@@ -110,7 +111,7 @@ static NODE *inserir_no(NODE *raiz, JOGO *jogo) {
 // Funções de rotação
 static NODE *selecionar_e_executar_rotacao(NODE *raiz, JOGO *jogo) {
     if (DesbalanceamentoEhNegativo(raiz)) {
-        if (JogoEhMaior(raiz->direita, jogo)) {
+        if (calcula_balanceamento(raiz->direita) < 0) {
             raiz = rodar_esquerda(raiz);
         }
         else {
@@ -119,16 +120,23 @@ static NODE *selecionar_e_executar_rotacao(NODE *raiz, JOGO *jogo) {
     }
 
     if (DesbalanceamentoEhPositivo(raiz)) {
-        if (JogoEhMenor(raiz->esquerda, jogo))
+        if (calcula_balanceamento(raiz->esquerda) > 0) {
             raiz = rodar_direita(raiz);
-        else
+        }
+        else{
             raiz = rodar_esquerda_direita(raiz);
+        }
     }
     return raiz;
 }
 
 NODE *rodar_esquerda(NODE *a) {
     NODE *b = a->direita;
+
+    if(b == NULL){
+        return a;
+    }
+
     a->direita = b->esquerda;
     b->esquerda = a;
 
@@ -141,6 +149,11 @@ NODE *rodar_esquerda(NODE *a) {
 
 NODE *rodar_direita(NODE *a) {
     NODE *b = a->esquerda;
+
+    if(b == NULL){
+        return a;
+    }
+    
     a->esquerda = b->direita;
     b->direita = a;
 
@@ -211,7 +224,7 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
             }
             apagar_no(&noRemovido);
         }else{
-            troca_min_dir((*raiz)->direita, *raiz, *raiz);
+            troca_min_dir(&(*raiz)->direita, *raiz, *raiz);
         }
     }
     else if (JogoEhMaior(*raiz, jogo)) {
@@ -224,23 +237,26 @@ static NODE* remover_no(NODE **raiz, JOGO *jogo) {
     return (*raiz);
 }
 
-static void troca_min_dir(NODE *troca, NODE *raiz, NODE *ant)
+static void troca_min_dir(NODE **troca, NODE *raiz, NODE *ant)
 {
-    if(troca->esquerda != NULL)
+    if((*troca)->esquerda != NULL)
     {
-        troca_min_dir(troca->esquerda, raiz, troca);
+        troca_min_dir(&(*troca)->esquerda, raiz, *troca);
         return;
     }
+
+    JOGO* trocaJogo = (*troca)->jogo;
+
     if(raiz == ant) {
-        ant->direita = troca->direita;
+        ant->direita = (*troca)->direita;
     }
     else {
-        ant->esquerda = troca->direita;
+        ant->esquerda = (*troca)->direita;
     }
     jogo_apagar(&(raiz->jogo));
-    raiz->jogo = troca->jogo;
-    free(troca);
-    troca = NULL;
+    raiz->jogo = trocaJogo;
+    free(*troca);
+    (*troca) = NULL;
 }
 
 // Funções de ordem
@@ -350,13 +366,15 @@ static bool JogoEhMaior(const NODE *raiz, JOGO *jogo) {
 }
 
 static bool DesbalanceamentoEhPositivo(NODE *raiz) {
-    return avl_altura_no(raiz->esquerda)
-               - avl_altura_no(raiz->direita) == 2;
+    return calcula_balanceamento(raiz) == 2;
 }
 
 static bool DesbalanceamentoEhNegativo(NODE *raiz) {
-    return avl_altura_no(raiz->esquerda)
-               - avl_altura_no(raiz->direita) == -2;
+    return calcula_balanceamento(raiz) == -2;
+}
+
+static int calcula_balanceamento(NODE *raiz){
+    return avl_altura_no(raiz->esquerda) - avl_altura_no(raiz->direita);
 }
 
 static int contar_nos_por_ano(NODE *raiz, JOGO *jogo) {
